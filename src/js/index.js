@@ -31,7 +31,12 @@ class MainScene extends Phaser.Scene {
     normalmente utilizamos para iniciar o estado da nossa Scene,
     como hp do jogador, ou o level que estamos
   */
-  init () { }
+  init () {
+    // largura da tela
+    this.gameWidth = this.sys.game.config.width;
+    // altura da tela
+    this.gameHeight = this.sys.game.config.height;
+  }
 
   /*
     Segundo metodo a ser executado
@@ -41,6 +46,14 @@ class MainScene extends Phaser.Scene {
   preload () {
     // carregando arquivo do tipo imagem
     this.load.image('background', './src/assets/background.png');
+    this.load.image('car', './src/assets/car.png');
+    this.load.image('truck', './src/assets/truck.png');
+
+    // carregando spritesheet
+    this.load.spritesheet('frog', './src/assets/frog.png', {
+      frameWidth: 54, // largura do quadro
+      frameHeight: 42, // altura do quadro
+    });
   }
 
   /*
@@ -56,9 +69,32 @@ class MainScene extends Phaser.Scene {
       'background', // chave da textura
     );
     // setando a origin do objeto para 0 (x, y)
-    // background.setOrigin(0);
-  }
+    background.setOrigin(0);
 
+    this.car = this.add.image(
+      48,
+      this.gameHeight - 140,
+      'car',
+    );
+    // mudando a escala da imagem para 0.8
+    this.car.setScale(0.8);
+
+    this.truck = this.add.image(
+      48,
+      this.gameHeight - 306,
+      'truck',
+    );
+    // mudando a escala da imagem para 0.8
+    this.car.setScale(0.8);
+
+    // Object tipo sprite
+    this.player = this.add.sprite(
+      this.gameWidth / 2,
+      this.gameHeight - 20,
+      'frog',
+      0, // frame index
+    );
+  }
   /*
     Quarto metodo a ser executado
     irá ficar em loop executando em média 60fps, basicamente e a função que 
