@@ -36,6 +36,10 @@ class MainScene extends Phaser.Scene {
     this.gameWidth = this.sys.game.config.width;
     // altura da tela
     this.gameHeight = this.sys.game.config.height;
+
+    // min e max velocidade de movimento do inimigo
+    this.enemyMinSpeed = 1;
+    this.enemyMaxSpeed = 4;
   }
 
   /*
@@ -78,6 +82,8 @@ class MainScene extends Phaser.Scene {
     );
     // mudando a escala da imagem para 0.8
     this.car.setScale(0.8);
+    // adicionando propriedade speed ao car
+    this.car.speed = this.setSpeed();
 
     this.truck = this.add.image(
       48,
@@ -86,6 +92,8 @@ class MainScene extends Phaser.Scene {
     );
     // mudando a escala da imagem para 0.8
     this.car.setScale(0.8);
+    // adicionando propriedade speed ao truck
+    this.truck.speed = this.setSpeed();
 
     // Object tipo sprite
     this.player = this.add.sprite(
@@ -101,5 +109,95 @@ class MainScene extends Phaser.Scene {
     realmente da "vida" ao jogo, aqui colocamos a lógica de movimentação e
     colisão do jogador por exemplo.
   */
-  update () { }
+  update () {
+    // a cada loop o método e executado novamente
+    this.carMovement()
+    this.truckMovement()
+  }
+
+  /*
+    Responsavel por criar de forma aleatoria a velocidade do inimigo  
+  */
+  setSpeed () {
+    const dir = this.setDirection(); // seta a direção do inimigo
+    // seta a velocidade de acordo com o min e max
+    const speed = this.enemyMinSpeed + Math.random() * (this.enemyMaxSpeed - this.enemyMinSpeed);
+    return dir * speed; // retorna a velocida (negativa ou positiva)
+  }
+
+  /* Responsavel por gerar uma direção aleatoria  */
+  setDirection () {
+    // chance de 50%
+    return Math.random() < 0.5 ? 1 : -1;
+  }
+
+  /* Movimentação do carro */
+  carMovement () {
+    // adiciona movimento ao carro (pode ser negativo ou positivo)
+    this.car.x += this.car.speed;
+
+    // caso o carro esteja saindo da tela pela esquerda
+    const conditionLeft = this.car.speed < 0 && this.car.x <= -this.car.width;
+    // casso o carro esteja saindo da tela pela direita
+    const conditionRight = this.car.speed > 0 && this.car.x >= this.gameWidth + this.car.width;
+
+    if (conditionLeft) {
+      // muda a direção do carro  
+      this.car.speed *= -1;
+      // deixa a imagem do carro no eixo X na sua forma padrão
+      this.car.flipX = false;
+
+      // muda o carro de pista
+      if (!this.car.moveToDown) {
+        this.car.setPosition(this.car.x, this.car.y + this.car.height);
+        this.car.moveToDown = true;
+      }
+
+    } else if (conditionRight) {
+      // muda a direção do carro
+      this.car.speed *= -1;
+      // inverte a imagem do carro no eixo X
+      this.car.flipX = true;
+
+      // muda o carro de pista
+      if (this.car.moveToDown) {
+        this.car.setPosition(this.car.x, this.car.y - this.car.height);
+        this.car.moveToDown = false;
+      }
+    }
+  }
+
+  /* Movimentação do caminhão */
+  truckMovement () {
+    // adiciona movimento ao caminhão (pode ser negativo ou positivo)
+    this.truck.x += this.truck.speed;
+
+    // gira o caminhão no eixo X (pode ser esquerda ou direita)
+    if (this.truck.speed < 0) {
+      this.truck.flipX = true;
+    } else {
+      this.truck.flipX = false;
+    }
+
+    const conditionLeft = this.truck.speed < 0 && this.truck.x <= -this.truck.width;
+    const conditionRight = this.truck.speed > 0 && this.truck.x >= this.gameWidth + this.truck.width;
+
+    // move o caminhão de faixa com uma chance de 3%
+    if (Math.random() < 0.003) {
+      if (!this.truck.moveToDown) {
+        this.truck.setPosition(this.truck.x, this.truck.y + this.truck.height);
+        this.truck.moveToDown = true;
+      } else {
+        this.truck.setPosition(this.truck.x, this.truck.y - this.truck.height);
+        this.truck.moveToDown = false;
+      }
+    }
+
+    // muda o caminhão de direção
+    if (conditionLeft) {
+      this.truck.speed *= -1;
+    } else if (conditionRight) {
+      this.truck.speed *= -1;
+    }
+  }
 }
