@@ -40,6 +40,9 @@ class MainScene extends Phaser.Scene {
     // min e max velocidade de movimento do inimigo
     this.enemyMinSpeed = 1;
     this.enemyMaxSpeed = 4;
+
+    // utilizando KeyboardPlugin para utilizar a tecla "space"
+    this.spaceKey = this.input.keyboard.createCursorKeys().space;
   }
 
   /*
@@ -111,8 +114,10 @@ class MainScene extends Phaser.Scene {
   */
   update () {
     // a cada loop o método e executado novamente
-    this.carMovement()
-    this.truckMovement()
+    this.carMovement();
+    this.truckMovement();
+    this.playerMovement();
+    this.checkCollisions();
   }
 
   /*
@@ -198,6 +203,43 @@ class MainScene extends Phaser.Scene {
       this.truck.speed *= -1;
     } else if (conditionRight) {
       this.truck.speed *= -1;
+    }
+  }
+
+  /* Movimentação do jogador */
+  playerMovement () {
+    // justDown = só irá executar 1 vez ao pressionar
+    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      // cada vez que a tecla for pressionada, o jogador irá para cima
+      this.player.y -= this.player.height;
+      // muda para o frame de movimento (o jogador possui o 0 e 1)
+      this.player.setFrame(1);
+    } else {
+      // muda para o frame parado
+      this.player.setFrame(0);
+    }
+  }
+
+  // verifica colisões entre jogador/inimigo e jogador/topo da tela
+  checkCollisions () {
+    /*
+      getBounds retorna um objeto com a posição e tamanho do jogador/inimigo
+    */
+    const playerRect = this.player.getBounds();
+    const carRect = this.car.getBounds();
+    const truckRect = this.truck.getBounds();
+
+    // RectangleToRectangle verifica se o jogador está colidindo com os inigmios
+    if (Phaser.Geom.Intersects.RectangleToRectangle(playerRect, carRect)
+      || Phaser.Geom.Intersects.RectangleToRectangle(playerRect, truckRect)) {
+      console.log('o carro/caminhão me acertou, perdi!')
+      return;
+    }
+
+    // verifica se o jogador passou por todas as pistas e terminou o jogo
+    if (this.player.y <= 80) {
+      console.log('venci!')
+      return;
     }
   }
 }
