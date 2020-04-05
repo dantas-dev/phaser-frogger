@@ -43,6 +43,12 @@ class MainScene extends Phaser.Scene {
 
     // utilizando KeyboardPlugin para utilizar a tecla "space"
     this.spaceKey = this.input.keyboard.createCursorKeys().space;
+
+    // controla o fluxo do jogo
+    this.gamePause = false;
+
+    // pontuação
+    this.score = 0;
   }
 
   /*
@@ -61,6 +67,10 @@ class MainScene extends Phaser.Scene {
       frameWidth: 54, // largura do quadro
       frameHeight: 42, // altura do quadro
     });
+
+    // carregando sons
+    this.load.audio('victory', ['./src/assets/victory.wav']);
+    this.load.audio('gameOver', ['./src/assets/gameOver.mp3']);
   }
 
   /*
@@ -105,6 +115,16 @@ class MainScene extends Phaser.Scene {
       'frog',
       0, // frame index
     );
+
+    // adicionando áudios a scene
+    this.soundVictory = this.sound.add('victory', { loop: false, volume: 0.3 });
+    this.soundGameOver = this.sound.add('gameOver', { loop: false, volume: 0.3 });
+
+    // adicionando texto (X, Y, Texto, Configs)
+    this.textScore = this.add.text(20, 20, `Score: ${this.score}`, {
+      font: '20px Arial',
+      fill: '#fff',
+    });
   }
   /*
     Quarto metodo a ser executado
@@ -113,11 +133,17 @@ class MainScene extends Phaser.Scene {
     colisão do jogador por exemplo.
   */
   update () {
+    // verifica se é para pausar o jogo
+    if (this.gamePause) return;
+
     // a cada loop o método e executado novamente
     this.carMovement();
     this.truckMovement();
     this.playerMovement();
     this.checkCollisions();
+
+    // atualiza o texto
+    this.textScore.setText(`Score: ${this.score}`);
   }
 
   /*
@@ -232,14 +258,43 @@ class MainScene extends Phaser.Scene {
     // RectangleToRectangle verifica se o jogador está colidindo com os inigmios
     if (Phaser.Geom.Intersects.RectangleToRectangle(playerRect, carRect)
       || Phaser.Geom.Intersects.RectangleToRectangle(playerRect, truckRect)) {
-      console.log('o carro/caminhão me acertou, perdi!')
+      // console.log('o carro/caminhão me acertou, perdi!')
+      this.gameOver();
       return;
     }
 
     // verifica se o jogador passou por todas as pistas e terminou o jogo
     if (this.player.y <= 80) {
-      console.log('venci!')
+      this.playerWin();
       return;
     }
+  }
+
+  /* quando o jogador vencer */
+  playerWin () {
+    this.score += 1;
+    this.soundVictory.play();
+    this.player.setPosition(this.gameWidth / 2, this.gameHeight - 20);
+  }
+
+  /* quando o jogador perder */
+  gameOver () {
+    this.gamePause = true; // pausa o jogo
+    this.soundGameOver.play();
+
+    // adiciona um efeito de camera "shake" na tela principal do jogo
+    this.cameras.main.shake(500);
+
+    /* 
+      espera a o efeito de camera shake acabar e executa uma callback, que irá
+      executar outro efeito de camera: "fade"
+    */
+    this.cameras.main.on('camerashakecomplete', () => this.cameras.main.fade(500));
+
+    /* 
+      espera a o efeito de camera fade acabar e executa uma callback, que irá
+      reiniciar a scene atual
+    */
+    this.cameras.main.on('camerafadeoutcomplete', () => this.scene.restart());
   }
 }
